@@ -1,0 +1,24 @@
+{{define "title"}}Sign in{{end}}
+
+{{define "content"}}
+<div class="max-w-sm mx-auto py-16">
+  <h1 class="text-2xl font-semibold tracking-tight mb-2">Sign in to Beacon</h1>
+  <p class="text-sm text-gray-500 mb-8">Enter your email. We'll send you a one-time link to sign in.</p>
+
+  {{if .Error}}
+  <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+    {{.Error}}
+  </div>
+  {{end}}
+
+  <form method="POST" action="/login" class="space-y-4">
+    <div>
+      <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+      <input type="email" id="email" name="email" required autofocus
+             class="input"
+             placeholder="you@example.com" />
+    </div>
+    <button type="submit" class="btn-primary w-full">Send link</button>
+  </form>
+</div>
+{{end}}

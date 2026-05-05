@@ -1,0 +1,48 @@
+{{define "title"}}Events{{end}}
+
+{{define "content"}}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight">Events</h1>
+    <p class="text-sm text-gray-500 mt-1">Recent events received via <span class="font-mono">/emit</span>.</p>
+  </div>
+</div>
+
+{{if .Events}}
+<div class="border border-gray-100 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+      <tr>
+        <th class="text-left px-4 py-3 font-medium">Level</th>
+        <th class="text-left px-4 py-3 font-medium">Title</th>
+        <th class="text-left px-4 py-3 font-medium">Source</th>
+        <th class="text-left px-4 py-3 font-medium">Event</th>
+        <th class="text-left px-4 py-3 font-medium">When</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {{range .Events}}
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3 align-top">{{template "pill-level" .Level}}</td>
+        <td class="px-4 py-3 align-top">
+          <a href="/events/{{.ID}}" class="font-medium text-gray-900 hover:underline">{{.Title}}</a>
+        </td>
+        <td class="px-4 py-3 align-top">
+          {{if .Source}}{{template "pill-source" .Source}}{{else}}<span class="text-gray-300">—</span>{{end}}
+        </td>
+        <td class="px-4 py-3 align-top">
+          {{if .Event}}{{template "pill-event" .Event}}{{else}}<span class="text-gray-300">—</span>{{end}}
+        </td>
+        <td class="px-4 py-3 align-top text-gray-500 whitespace-nowrap" title="{{fmtDate .CreatedAt}}">{{timeAgo .CreatedAt}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<div class="border border-dashed border-gray-200 rounded-lg p-12 text-center">
+  <p class="text-sm text-gray-500">No events yet.</p>
+  <p class="text-xs text-gray-400 mt-2">Create a token and POST to <span class="font-mono">/emit</span> to see events here.</p>
+</div>
+{{end}}
+{{end}}

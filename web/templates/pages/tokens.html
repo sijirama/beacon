@@ -1,0 +1,70 @@
+{{define "title"}}API Tokens{{end}}
+
+{{define "content"}}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight">API Tokens</h1>
+    <p class="text-sm text-gray-500 mt-1">Bearer tokens for <span class="font-mono">/emit</span>.</p>
+  </div>
+</div>
+
+<div class="border border-gray-100 rounded-lg p-4 mb-8 bg-gray-50/50">
+  <form method="POST" action="/tokens" class="flex gap-2 items-end">
+    <div class="flex-1">
+      <label for="name" class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">New token</label>
+      <input type="text" id="name" name="name" required placeholder="e.g. ml-training, production-cron"
+             class="input" />
+    </div>
+    <button type="submit" class="btn-primary">Create</button>
+  </form>
+</div>
+
+{{if .Tokens}}
+<div class="border border-gray-100 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+      <tr>
+        <th class="text-left px-4 py-3 font-medium">Name</th>
+        <th class="text-left px-4 py-3 font-medium">Token</th>
+        <th class="text-left px-4 py-3 font-medium">Created</th>
+        <th class="text-right px-4 py-3 font-medium">Events</th>
+        <th class="text-right px-4 py-3 font-medium"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {{range .Tokens}}
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3 font-medium whitespace-nowrap">{{.Name}}</td>
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-2">
+            <code class="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{{maskToken .Token}}</code>
+            <button type="button" class="copy-btn text-xs text-gray-500 hover:text-gray-900 px-1.5 py-1 rounded hover:bg-gray-100 inline-flex items-center gap-1" data-value="{{.Token}}" title="Copy token">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="6" y="6" width="10" height="11" rx="1.5"/>
+                <path d="M4 13V4.5A1.5 1.5 0 0 1 5.5 3H12"/>
+              </svg>
+              <span class="copy-label">Copy</span>
+            </button>
+          </div>
+        </td>
+        <td class="px-4 py-3 text-gray-500 whitespace-nowrap" title="{{fmtDate .CreatedAt}}">{{timeAgo .CreatedAt}}</td>
+        <td class="px-4 py-3 text-right text-gray-600">
+          {{if .EventCount}}<a href="/?token_id={{.ID}}" class="hover:underline">{{.EventCount}}</a>{{else}}0{{end}}
+        </td>
+        <td class="px-4 py-3 text-right">
+          <form method="POST" action="/tokens/{{.ID}}/delete" onsubmit="return confirm('Delete this token? Scripts using it will stop working.')">
+            <button type="submit" class="btn-danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<div class="border border-dashed border-gray-200 rounded-lg p-12 text-center">
+  <p class="text-sm text-gray-500">No tokens yet.</p>
+  <p class="text-xs text-gray-400 mt-2">Create one above to start sending events.</p>
+</div>
+{{end}}
+{{end}}

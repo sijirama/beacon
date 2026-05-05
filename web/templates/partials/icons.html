@@ -1,0 +1,33 @@
+{{define "icon-source"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="5" rx="1"/><rect x="3" y="11" width="14" height="5" rx="1"/><circle cx="6" cy="6.5" r="0.6" fill="currentColor" stroke="none"/><circle cx="6" cy="13.5" r="0.6" fill="currentColor" stroke="none"/></svg>{{end}}
+
+{{define "icon-event"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path d="M11 2.5L4.5 11h4.2l-.7 6.5L15.5 9h-4.2l.7-6.5z"/></svg>{{end}}
+
+{{define "icon-level-info"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M10 9.5v4"/><circle cx="10" cy="6.5" r="0.6" fill="currentColor" stroke="none"/></svg>{{end}}
+
+{{define "icon-level-warn"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path d="M10 3.2L17.8 17H2.2L10 3.2z"/><path d="M10 8.5v3.5"/><circle cx="10" cy="14.5" r="0.6" fill="currentColor" stroke="none"/></svg>{{end}}
+
+{{define "icon-level-danger"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><path d="M10 6v5"/><circle cx="10" cy="13.5" r="0.6" fill="currentColor" stroke="none"/></svg>{{end}}
+
+{{define "icon-level"}}{{if eq (printf "%s" .) "info"}}{{template "icon-level-info"}}{{else if eq (printf "%s" .) "warn"}}{{template "icon-level-warn"}}{{else if eq (printf "%s" .) "danger"}}{{template "icon-level-danger"}}{{end}}{{end}}
+
+{{define "icon-message"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path d="M3 7.5a3 3 0 013-3h8a3 3 0 013 3v3.5a3 3 0 01-3 3H8.5l-3 2.5v-2.5a3 3 0 01-2.5-3v-3.5z"/></svg>{{end}}
+
+{{define "icon-metadata"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path d="M3 3h6.5l7.5 7.5-6.5 6.5L3 9.5V3z"/><circle cx="6.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>{{end}}
+
+{{define "icon-clock"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>{{end}}
+
+{{define "icon-key"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="10" r="3"/><path d="M9.5 10h7.5M14 10v2.5M17 10v2"/></svg>{{end}}
+
+{{define "icon-globe"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M3 10h14"/><ellipse cx="10" cy="10" rx="3.2" ry="7"/></svg>{{end}}
+
+{{define "icon-channel"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="11" rx="1.5"/><path d="M3.5 6l6.5 5 6.5-5"/></svg>{{end}}
+
+{{define "icon-send"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path d="M3 10l14-7-5 14-2.5-5L3 10z"/></svg>{{end}}
+
+{{define "icon-details"}}<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M10 9.5v4"/><circle cx="10" cy="6.5" r="0.6" fill="currentColor" stroke="none"/></svg>{{end}}
+
+{{define "pill-source"}}<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-slate-50 text-slate-600 font-mono">{{template "icon-source"}}<span>{{.}}</span></span>{{end}}
+
+{{define "pill-event"}}<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-violet-50 text-violet-700 font-mono">{{template "icon-event"}}<span>{{.}}</span></span>{{end}}
+
+{{define "pill-level"}}<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs uppercase tracking-wide font-medium {{if eq (printf "%s" .) "info"}}bg-blue-50 text-blue-700{{else if eq (printf "%s" .) "warn"}}bg-amber-50 text-amber-800{{else if eq (printf "%s" .) "danger"}}bg-red-50 text-red-700{{else}}bg-gray-100 text-gray-700{{end}}">{{template "icon-level" .}}<span>{{.}}</span></span>{{end}}

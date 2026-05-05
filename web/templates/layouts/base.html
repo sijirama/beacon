@@ -1,0 +1,76 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{block "title" .}}{{.Title}}{{end}} · Beacon</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style type="text/tailwindcss">
+    @layer base {
+      body { @apply bg-white text-gray-900 antialiased; }
+    }
+    @layer components {
+      .btn { @apply inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium border border-gray-200 bg-white hover:bg-gray-50 transition; }
+      .btn-primary { @apply inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium border border-transparent bg-gray-900 text-white hover:bg-gray-800 transition; }
+      .btn-danger { @apply inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium border border-red-200 bg-white text-red-700 hover:bg-red-50 transition; }
+      .input { @apply w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300; }
+      .badge { @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wide; }
+      .badge-info { @apply bg-blue-50 text-blue-700; }
+      .badge-warn { @apply bg-amber-50 text-amber-800; }
+      .badge-danger { @apply bg-red-50 text-red-700; }
+      .badge-muted { @apply bg-gray-100 text-gray-700; }
+      .badge-success { @apply bg-emerald-50 text-emerald-700; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  {{if .User}}
+  <header class="border-b border-gray-100">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="/" class="text-base font-semibold tracking-tight">Beacon</a>
+      <nav class="flex items-center gap-1 text-sm">
+        {{template "navlink" dict "Path" .Path "Href" "/" "Label" "Events"}}
+        {{template "navlink" dict "Path" .Path "Href" "/queue" "Label" "Queue"}}
+        {{template "navlink" dict "Path" .Path "Href" "/tokens" "Label" "Tokens"}}
+        <form method="POST" action="/logout" class="ml-3">
+          <button type="submit" class="text-sm text-gray-500 hover:text-gray-900 px-2 py-1">Sign out</button>
+        </form>
+      </nav>
+    </div>
+  </header>
+  {{end}}
+
+  <main class="flex-1 max-w-5xl w-full mx-auto px-6 py-10">
+    {{block "content" .}}{{end}}
+  </main>
+
+  <footer class="border-t border-gray-100">
+    <div class="max-w-5xl mx-auto px-6 py-4 text-xs text-gray-400">
+      Beacon &middot; {{.User}}
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.copy-btn');
+      if (!btn) return;
+      const value = btn.dataset.value;
+      if (!value) return;
+      navigator.clipboard.writeText(value).then(() => {
+        const label = btn.querySelector('.copy-label');
+        if (!label) return;
+        const orig = label.textContent;
+        label.textContent = 'Copied';
+        btn.classList.add('text-emerald-600');
+        setTimeout(() => {
+          label.textContent = orig;
+          btn.classList.remove('text-emerald-600');
+        }, 1200);
+      });
+    });
+  </script>
+</body>
+</html>
+{{end}}
+
+{{define "navlink"}}<a href="{{.Href}}" class="px-3 py-1.5 rounded-md {{if eq .Path .Href}}bg-gray-100 text-gray-900{{else}}text-gray-600 hover:text-gray-900 hover:bg-gray-50{{end}}">{{.Label}}</a>{{end}}

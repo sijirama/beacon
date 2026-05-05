@@ -1,0 +1,147 @@
+{{define "title"}}Event #{{.Event.ID}}{{end}}
+
+{{define "content"}}
+<div class="mb-8">
+  <a href="/" class="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition">
+    <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l-5 5 5 5"/></svg>
+    Events
+  </a>
+</div>
+
+<!-- Header: pills + title + when -->
+<header class="mb-12">
+  <div class="flex flex-wrap items-center gap-1.5 mb-4">
+    {{template "pill-level" .Event.Level}}
+    {{if .Event.Source}}{{template "pill-source" .Event.Source}}{{end}}
+    {{if .Event.Event}}{{template "pill-event" .Event.Event}}{{end}}
+    <span class="text-xs text-gray-300 font-mono ml-1">#{{.Event.ID}}</span>
+  </div>
+
+  <h1 class="text-3xl font-semibold tracking-tight text-gray-900 mb-3 leading-tight">{{.Event.Title}}</h1>
+
+  <div class="inline-flex items-center gap-1.5 text-xs text-gray-500" title="{{fmtDate .Event.CreatedAt}}">
+    {{template "icon-clock"}}
+    <span>{{timeAgo .Event.CreatedAt}}</span>
+    <span class="text-gray-300">·</span>
+    <span class="font-mono">{{fmtDate .Event.CreatedAt}}</span>
+  </div>
+</header>
+
+<!-- Message -->
+{{if .Event.Message}}
+<section class="mb-10">
+  <div class="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-gray-500 font-medium mb-3">
+    <span class="text-blue-500">{{template "icon-message"}}</span>
+    <span>Message</span>
+  </div>
+  <div class="rounded-lg border border-gray-100 bg-white overflow-hidden">
+    <div class="border-l-2 {{if eq (printf "%s" .Event.Level) "info"}}border-l-blue-400{{else if eq (printf "%s" .Event.Level) "warn"}}border-l-amber-400{{else if eq (printf "%s" .Event.Level) "danger"}}border-l-red-400{{else}}border-l-gray-300{{end}} p-5 whitespace-pre-wrap text-[15px] text-gray-800 leading-relaxed">{{.Event.Message}}</div>
+  </div>
+</section>
+{{end}}
+
+<!-- Metadata -->
+{{if .Event.Metadata}}
+<section class="mb-10">
+  <div class="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-gray-500 font-medium mb-3">
+    <span class="text-violet-500">{{template "icon-metadata"}}</span>
+    <span>Metadata</span>
+  </div>
+  <div class="rounded-lg border border-gray-100 bg-white overflow-hidden">
+    <table class="w-full text-sm">
+      <tbody class="divide-y divide-gray-100">
+        {{range $k, $v := .Event.Metadata}}
+        <tr class="hover:bg-gray-50/60">
+          <td class="px-5 py-2.5 text-gray-500 font-mono text-xs w-1/3 align-top">{{$k}}</td>
+          <td class="px-5 py-2.5 font-mono text-xs text-gray-900 break-all">{{$v}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</section>
+{{end}}
+
+<!-- Details -->
+<section class="mb-10">
+  <div class="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-gray-500 font-medium mb-3">
+    <span class="text-slate-500">{{template "icon-details"}}</span>
+    <span>Details</span>
+  </div>
+  <div class="rounded-lg border border-gray-100 bg-white p-5">
+    <dl class="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+      <div class="flex items-center gap-2.5">
+        <span class="text-gray-400 shrink-0">{{template "icon-channel"}}</span>
+        <dt class="text-gray-500 w-20 shrink-0">Channel</dt>
+        <dd class="text-gray-900">{{.Event.Channel}}</dd>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <span class="text-gray-400 shrink-0">{{template "icon-globe"}}</span>
+        <dt class="text-gray-500 w-20 shrink-0">IP</dt>
+        <dd class="text-gray-900 font-mono text-xs truncate">{{if .Event.IP}}{{.Event.IP}}{{else}}<span class="text-gray-400">—</span>{{end}}</dd>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <span class="text-gray-400 shrink-0">{{template "icon-key"}}</span>
+        <dt class="text-gray-500 w-20 shrink-0">Token</dt>
+        <dd class="text-gray-900 truncate">
+          {{if .Event.Token}}
+            <a href="/?token_id={{.Event.Token.ID}}" class="hover:underline">{{.Event.Token.Name}}</a>
+          {{else}}
+            <span class="text-gray-400">—</span>
+          {{end}}
+        </dd>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <span class="text-gray-400 shrink-0">{{template "icon-clock"}}</span>
+        <dt class="text-gray-500 w-20 shrink-0">Created</dt>
+        <dd class="text-gray-900 text-xs font-mono">{{fmtDate .Event.CreatedAt}}</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<!-- Deliveries -->
+<section>
+  <div class="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-gray-500 font-medium mb-3">
+    <span class="text-emerald-500">{{template "icon-send"}}</span>
+    <span>Deliveries</span>
+  </div>
+  {{if .Deliveries}}
+  <div class="border border-gray-100 rounded-lg overflow-hidden bg-white">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50/60 text-gray-500 text-[11px] uppercase tracking-wider">
+        <tr>
+          <th class="text-left px-5 py-2.5 font-medium">Status</th>
+          <th class="text-left px-5 py-2.5 font-medium">Channel</th>
+          <th class="text-left px-5 py-2.5 font-medium">Provider</th>
+          <th class="text-left px-5 py-2.5 font-medium">Attempts</th>
+          <th class="text-left px-5 py-2.5 font-medium">When</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {{range .Deliveries}}
+        <tr class="hover:bg-gray-50/60">
+          <td class="px-5 py-2.5">
+            {{if eq (printf "%s" .Status) "sent"}}<span class="badge badge-success">sent</span>
+            {{else if eq (printf "%s" .Status) "failed"}}<span class="badge badge-danger">failed</span>
+            {{else}}<span class="badge badge-muted">{{.Status}}</span>{{end}}
+          </td>
+          <td class="px-5 py-2.5 text-gray-700">{{.Channel}}</td>
+          <td class="px-5 py-2.5 text-gray-700">{{.Provider}}{{if .ProviderMsgID}} <span class="font-mono text-xs text-gray-400">{{truncate .ProviderMsgID 16}}</span>{{end}}</td>
+          <td class="px-5 py-2.5 text-gray-500">{{.Attempts}}</td>
+          <td class="px-5 py-2.5 text-gray-500" title="{{fmtDate .CreatedAt}}">{{timeAgo .CreatedAt}}</td>
+        </tr>
+        {{if .Error}}
+        <tr><td colspan="5" class="px-5 pb-3 -mt-1 text-xs text-red-700 font-mono break-all">{{.Error}}</td></tr>
+        {{end}}
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <div class="rounded-lg border border-dashed border-gray-200 p-6 text-center">
+    <p class="text-sm text-gray-500">No deliveries recorded yet.</p>
+  </div>
+  {{end}}
+</section>
+{{end}}

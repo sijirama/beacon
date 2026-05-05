@@ -1,0 +1,63 @@
+{{define "title"}}Queue{{end}}
+
+{{define "content"}}
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold tracking-tight">Queue</h1>
+  <p class="text-sm text-gray-500 mt-1">Email delivery jobs.</p>
+</div>
+
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+  <div class="rounded-lg border border-gray-100 px-4 py-3">
+    <div class="text-xs text-gray-500 uppercase tracking-wide">Pending</div>
+    <div class="text-2xl font-semibold mt-1">{{index .Stats "pending"}}</div>
+  </div>
+  <div class="rounded-lg border border-gray-100 px-4 py-3">
+    <div class="text-xs text-gray-500 uppercase tracking-wide">Active</div>
+    <div class="text-2xl font-semibold mt-1">{{index .Stats "active"}}</div>
+  </div>
+  <div class="rounded-lg border border-gray-100 px-4 py-3">
+    <div class="text-xs text-gray-500 uppercase tracking-wide">Retry</div>
+    <div class="text-2xl font-semibold mt-1">{{index .Stats "retry"}}</div>
+  </div>
+  <div class="rounded-lg border border-gray-100 px-4 py-3">
+    <div class="text-xs text-gray-500 uppercase tracking-wide">Failed</div>
+    <div class="text-2xl font-semibold mt-1">{{index .Stats "archived"}}</div>
+  </div>
+</div>
+
+<h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Recent deliveries</h2>
+{{if .Tasks}}
+<div class="border border-gray-100 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
+      <tr>
+        <th class="text-left px-4 py-3 font-medium">Status</th>
+        <th class="text-left px-4 py-3 font-medium">Channel</th>
+        <th class="text-left px-4 py-3 font-medium">Event</th>
+        <th class="text-left px-4 py-3 font-medium">Attempts</th>
+        <th class="text-left px-4 py-3 font-medium">When</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {{range .Tasks}}
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3">
+          {{if eq (printf "%s" .Status) "sent"}}<span class="badge badge-success">sent</span>
+          {{else if eq (printf "%s" .Status) "failed"}}<span class="badge badge-danger">failed</span>
+          {{else}}<span class="badge badge-muted">{{.Status}}</span>{{end}}
+        </td>
+        <td class="px-4 py-3 text-gray-600">{{.Channel}}</td>
+        <td class="px-4 py-3"><a href="/events/{{.EventID}}" class="text-gray-900 hover:underline">#{{.EventID}}</a></td>
+        <td class="px-4 py-3 text-gray-500">{{.Attempts}}</td>
+        <td class="px-4 py-3 text-gray-500" title="{{fmtDate .CreatedAt}}">{{timeAgo .CreatedAt}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<div class="border border-dashed border-gray-200 rounded-lg p-12 text-center">
+  <p class="text-sm text-gray-500">No deliveries yet.</p>
+</div>
+{{end}}
+{{end}}
