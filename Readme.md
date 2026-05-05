@@ -24,6 +24,25 @@ docker compose up -d
 
 Visit `BASE_URL`, sign in via magic link, create a token.
 
+## Deployment notes
+
+Beacon stores its data in SQLite, so the database file must live on persistent storage.
+
+If you redeploy without persisting the SQLite file, your data will be wiped.
+
+- Recommended container path: `DB_PATH=/app/data/beacon.db`
+- Whatever platform you use, make sure the directory containing that file is mounted to persistent storage
+
+### Coolify
+
+If you're deploying on Coolify:
+
+- add a `Directory Mount`
+- mount a persistent host directory to `/app/data`
+- set `DB_PATH=/app/data/beacon.db`
+
+If you leave `DB_PATH` as `./data/beacon.db`, it will still work with the current Dockerfile because the app runs from `/app`, but the absolute path is clearer.
+
 ## Public endpoints
 
 - `GET /health` → lightweight liveness check, returns `{"status":"ok"}`
