@@ -8,6 +8,55 @@
   </div>
 </div>
 
+<div class="mb-6 rounded-lg border border-gray-100 bg-white overflow-hidden">
+  <button
+    type="button"
+    class="filter-toggle flex w-full items-center justify-between px-4 py-3 text-left"
+    data-target="events-filters"
+    aria-expanded="{{if or .Query .Level}}true{{else}}false{{end}}">
+    <span class="flex items-center gap-2">
+      <span class="text-sm font-medium text-gray-900">Search & filter</span>
+      {{if or .Query .Level}}
+      <span class="badge badge-muted normal-case tracking-normal">active</span>
+      {{end}}
+    </span>
+    <svg class="filter-chevron h-4 w-4 text-gray-400 transition-transform {{if or .Query .Level}}rotate-180{{end}}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5"/></svg>
+  </button>
+  <form method="GET" action="/" id="events-filters" class="{{if or .Query .Level}}block{{else}}hidden{{end}} border-t border-gray-100 px-4 py-4">
+    <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_auto]">
+      <div>
+        <label for="q" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+        <input id="q" name="q" value="{{.Query}}" class="input" placeholder="Title, message, source, event" />
+      </div>
+      <div>
+        <label for="level" class="block text-sm font-medium text-gray-700 mb-1">Level</label>
+        <select id="level" name="level" class="input">
+          <option value="">All levels</option>
+          <option value="info" {{if eq .Level "info"}}selected{{end}}>Info</option>
+          <option value="warn" {{if eq .Level "warn"}}selected{{end}}>Warn</option>
+          <option value="danger" {{if eq .Level "danger"}}selected{{end}}>Danger</option>
+        </select>
+      </div>
+      <div class="flex items-end gap-2">
+        {{if .TokenID}}<input type="hidden" name="token_id" value="{{.TokenID}}" />{{end}}
+        <button type="submit" class="btn-primary">Apply</button>
+        <a href="{{.ClearURL}}" class="btn">Clear</a>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="flex items-center justify-between mb-4 text-sm text-gray-500">
+  <p>
+    {{if gt .Total 0}}
+    Showing {{.ShowingFrom}}-{{.ShowingTo}} of {{.Total}}
+    {{else}}
+    No matching events
+    {{end}}
+  </p>
+  <p>Page {{.Page}} of {{.TotalPages}}</p>
+</div>
+
 {{if .Events}}
 <div class="border border-gray-100 rounded-lg overflow-hidden">
   <table class="w-full text-sm">
@@ -39,10 +88,37 @@
     </tbody>
   </table>
 </div>
+<div class="mt-4 flex items-center justify-between">
+  <div>
+    {{if .HasPrev}}
+    <a href="{{.PrevURL}}" class="btn">Previous</a>
+    {{end}}
+  </div>
+  <div>
+    {{if .HasNext}}
+    <a href="{{.NextURL}}" class="btn">Next</a>
+    {{end}}
+  </div>
+</div>
 {{else}}
 <div class="border border-dashed border-gray-200 rounded-lg p-12 text-center">
   <p class="text-sm text-gray-500">No events yet.</p>
   <p class="text-xs text-gray-400 mt-2">Create a token and POST to <span class="font-mono">/emit</span> to see events here.</p>
 </div>
 {{end}}
+<script>
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-toggle');
+    if (!btn) return;
+    const targetId = btn.dataset.target;
+    if (!targetId) return;
+    const panel = document.getElementById(targetId);
+    if (!panel) return;
+    const isOpen = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!isOpen));
+    panel.classList.toggle('hidden', isOpen);
+    const chevron = btn.querySelector('.filter-chevron');
+    if (chevron) chevron.classList.toggle('rotate-180', !isOpen);
+  });
+</script>
 {{end}}

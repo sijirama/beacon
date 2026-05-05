@@ -34,6 +34,7 @@ func (h *AuthHandler) GetLogin(c *gin.Context) {
 	}
 	h.renderer.Render(c, http.StatusOK, "login", gin.H{
 		"Title": "Sign in",
+		"Error": strings.TrimSpace(c.Query("error")),
 	})
 }
 

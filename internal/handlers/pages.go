@@ -3,7 +3,9 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,17 +28,67 @@ func NewPages(g *gorm.DB, r *web.Renderer, ins *asynq.Inspector) *PagesHandler {
 }
 
 func (h *PagesHandler) Events(c *gin.Context) {
+	const pageSize = 25
+
 	var events []models.Event
-	q := h.db.Order("created_at DESC").Limit(100)
+	queryText := strings.TrimSpace(c.Query("q"))
+	level := strings.TrimSpace(c.Query("level"))
+	tokenIDStr := strings.TrimSpace(c.Query("token_id"))
+	page := parsePage(c.Query("page"))
+
+	q := h.db.Model(&models.Event{})
 	if tokenIDStr := c.Query("token_id"); tokenIDStr != "" {
 		if id, err := strconv.ParseUint(tokenIDStr, 10, 64); err == nil {
 			q = q.Where("token_id = ?", uint(id))
 		}
 	}
-	q.Find(&events)
+	switch level {
+	case "", string(models.LevelInfo), string(models.LevelWarn), string(models.LevelDanger):
+		if level != "" {
+			q = q.Where("level = ?", level)
+		}
+	default:
+		level = ""
+	}
+	if queryText != "" {
+		like := "%" + queryText + "%"
+		q = q.Where(
+			"title LIKE ? OR message LIKE ? OR source LIKE ? OR event LIKE ?",
+			like, like, like, like,
+		)
+	}
+
+	var total int64
+	q.Count(&total)
+
+	totalPages := int((total + pageSize - 1) / pageSize)
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+
+	offset := (page - 1) * pageSize
+	q.Order("created_at DESC").Limit(pageSize).Offset(offset).Find(&events)
+
 	h.renderer.Render(c, http.StatusOK, "events", gin.H{
-		"Title":  "Events",
-		"Events": events,
+		"Title":       "Events",
+		"Events":      events,
+		"Query":       queryText,
+		"Level":       level,
+		"TokenID":     tokenIDStr,
+		"Page":        page,
+		"PageSize":    pageSize,
+		"Total":       total,
+		"TotalPages":  totalPages,
+		"HasPrev":     page > 1,
+		"HasNext":     int64(page*pageSize) < total,
+		"PrevURL":     buildEventsURL(queryText, level, tokenIDStr, page-1),
+		"NextURL":     buildEventsURL(queryText, level, tokenIDStr, page+1),
+		"ClearURL":    buildEventsURL("", "", tokenIDStr, 1),
+		"ShowingFrom": showingFrom(total, page, pageSize),
+		"ShowingTo":   showingTo(total, page, pageSize),
 	})
 }
 
@@ -112,4 +164,51 @@ func (h *PagesHandler) Tokens(c *gin.Context) {
 		"Title":  "API Tokens",
 		"Tokens": out,
 	})
+}
+
+func parsePage(s string) int {
+	page, err := strconv.Atoi(s)
+	if err != nil || page < 1 {
+		return 1
+	}
+	return page
+}
+
+func buildEventsURL(queryText, level, tokenID string, page int) string {
+	if page < 1 {
+		page = 1
+	}
+	values := url.Values{}
+	if queryText != "" {
+		values.Set("q", queryText)
+	}
+	if level != "" {
+		values.Set("level", level)
+	}
+	if tokenID != "" {
+		values.Set("token_id", tokenID)
+	}
+	if page > 1 {
+		values.Set("page", strconv.Itoa(page))
+	}
+	encoded := values.Encode()
+	if encoded == "" {
+		return "/"
+	}
+	return "/?" + encoded
+}
+
+func showingFrom(total int64, page, pageSize int) int64 {
+	if total == 0 {
+		return 0
+	}
+	return int64((page-1)*pageSize) + 1
+}
+
+func showingTo(total int64, page, pageSize int) int64 {
+	end := int64(page * pageSize)
+	if end > total {
+		return total
+	}
+	return end
 }

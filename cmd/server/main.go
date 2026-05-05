@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -16,6 +18,7 @@ import (
 	"github.com/sijirama/beacon/internal/db"
 	"github.com/sijirama/beacon/internal/handlers"
 	"github.com/sijirama/beacon/internal/middleware"
+	"github.com/sijirama/beacon/internal/models"
 	"github.com/sijirama/beacon/internal/queue"
 	"github.com/sijirama/beacon/internal/services/email"
 	"github.com/sijirama/beacon/internal/web"
@@ -96,14 +99,31 @@ func main() {
 	pagesH := handlers.NewPages(gormDB, renderer, inspector)
 	tokensH := handlers.NewTokens(gormDB)
 	emitH := handlers.NewEmit(gormDB, qClient, cfg.EmailRetries)
+	systemH := handlers.NewSystem(cfg.BaseURL, sqlDB, store, qClient)
+	emitLimiter := middleware.NewFixedWindowLimiter(60, time.Minute)
+	loginLimiter := middleware.NewFixedWindowLimiter(5, 15*time.Minute)
 
 	// --- Router ---
 	r := gin.Default()
 	r.Static("/static", "./web/static")
-	r.GET("/health", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })
+	r.GET("/health", systemH.Health)
+	r.GET("/heartbeat", systemH.Heartbeat)
+	r.GET("/api-spec", systemH.APISpec)
+	r.GET("/openapi.json", systemH.OpenAPI)
 
 	// API: bearer-authenticated
-	api := r.Group("/", middleware.RequireBearer(gormDB))
+	api := r.Group(
+		"/",
+		middleware.RequireBearer(gormDB),
+		middleware.LimitJSON(emitLimiter, func(c *gin.Context) string {
+			if v, ok := c.Get("token"); ok {
+				if t, ok := v.(*models.Token); ok && t != nil {
+					return fmt.Sprintf("emit:token:%d", t.ID)
+				}
+			}
+			return "emit:ip:" + c.ClientIP()
+		}),
+	)
 	api.POST("/emit", emitH.Post)
 
 	sessionDeps := middleware.SessionDeps{Store: store, SessionTTL: cfg.SessionTTL}
@@ -111,7 +131,10 @@ func main() {
 	// Public web auth flows
 	pub := r.Group("/", middleware.LoadSession(sessionDeps))
 	pub.GET("/login", authH.GetLogin)
-	pub.POST("/login", authH.PostLogin)
+	pub.POST("/login", middleware.LimitHTMLRedirect(loginLimiter, func(c *gin.Context) string {
+		email := strings.TrimSpace(strings.ToLower(c.PostForm("email")))
+		return "login:" + c.ClientIP() + ":" + email
+	}, "/login", "Too many sign-in attempts. Try again in a bit."), authH.PostLogin)
 	pub.GET("/auth/verify", authH.GetVerify)
 	pub.POST("/logout", authH.PostLogout)
 

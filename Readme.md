@@ -1,20 +1,16 @@
 # Beacon
 
-> A self-hosted webhook → email notification service for your scripts, ML runs, and personal devops.
+> A small self-hosted webhook notification thing.
 
-## Why
-
-I wanted a dead-simple way to get pinged when long things finish — ML training jobs, cron scripts, deploys, backups. Just email me when something happens. No SaaS, no shared dashboards, no extra accounts.
-
-So I built Beacon. Point any script at it with a bearer token and it'll email you. You can self-host it too.
+Beacon lets you `POST /emit` from a script and get a notification when something happens. Right now that notification channel is email, but the shape is meant to grow.
 
 ## What it does
 
-- `POST /emit` with a bearer token → email lands in your inbox
-- Web UI to manage API tokens, browse events, watch the email queue
-- Magic-link login (passwordless, allowlisted by email)
-- Redis-backed email queue with retries
-- SQLite for persistence, single Docker container to deploy
+- `POST /emit` with a bearer token, create a notification event
+- Manage tokens and browse events in a small web UI
+- Sign in with magic links
+- Queue delivery jobs through Redis with retries
+- Store everything in SQLite
 
 ## Quick start
 
@@ -27,6 +23,13 @@ docker compose up -d
 ```
 
 Visit `BASE_URL`, sign in via magic link, create a token.
+
+## Public endpoints
+
+- `GET /health` → lightweight liveness check, returns `{"status":"ok"}`
+- `GET /heartbeat` → deeper heartbeat, checks app, SQLite, Redis, and queue connectivity
+- `GET /api-spec` → plain-text API spec for humans, scripts, and LLMs
+- `GET /openapi.json` → OpenAPI 3.1 JSON document for tool integrations
 
 ## Send an event
 

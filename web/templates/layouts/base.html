@@ -14,6 +14,7 @@
       .btn-primary { @apply inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium border border-transparent bg-gray-900 text-white hover:bg-gray-800 transition; }
       .btn-danger { @apply inline-flex items-center justify-center px-3 py-1.5 rounded-md text-sm font-medium border border-red-200 bg-white text-red-700 hover:bg-red-50 transition; }
       .input { @apply w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300; }
+      .pill-link { @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition; }
       .badge { @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wide; }
       .badge-info { @apply bg-blue-50 text-blue-700; }
       .badge-warn { @apply bg-amber-50 text-amber-800; }
@@ -32,6 +33,10 @@
         {{template "navlink" dict "Path" .Path "Href" "/" "Label" "Events"}}
         {{template "navlink" dict "Path" .Path "Href" "/queue" "Label" "Queue"}}
         {{template "navlink" dict "Path" .Path "Href" "/tokens" "Label" "Tokens"}}
+        <a href="/api-spec" class="pill-link ml-2 border-sky-200/80 bg-sky-50 text-sky-700 hover:border-sky-300 hover:bg-sky-100/70 hover:text-sky-800">
+          <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.75 5.75h6.5M6.75 10h6.5M6.75 14.25h3.5"/><path d="M5 2.75h10A2.25 2.25 0 0 1 17.25 5v10A2.25 2.25 0 0 1 15 17.25H5A2.25 2.25 0 0 1 2.75 15V5A2.25 2.25 0 0 1 5 2.75Z"/></svg>
+          <span>API Spec</span>
+        </a>
         <form method="POST" action="/logout" class="ml-3">
           <button type="submit" class="text-sm text-gray-500 hover:text-gray-900 px-2 py-1">Sign out</button>
         </form>
@@ -45,8 +50,18 @@
   </main>
 
   <footer class="border-t border-gray-100">
-    <div class="max-w-5xl mx-auto px-6 py-4 text-xs text-gray-400">
-      Beacon &middot; {{.User}}
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4 text-xs text-gray-400">
+      <div>Beacon &middot; {{.User}}</div>
+      <div class="flex items-center gap-2">
+        <a href="/api-spec" class="pill-link border-sky-200/80 bg-sky-50/80 text-sky-700 hover:border-sky-300 hover:bg-sky-100/70 hover:text-sky-800">
+          <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.75 5.75h6.5M6.75 10h6.5M6.75 14.25h3.5"/><path d="M5 2.75h10A2.25 2.25 0 0 1 17.25 5v10A2.25 2.25 0 0 1 15 17.25H5A2.25 2.25 0 0 1 2.75 15V5A2.25 2.25 0 0 1 5 2.75Z"/></svg>
+          <span>API Spec</span>
+        </a>
+        <a href="/openapi.json" class="pill-link border-emerald-200/80 bg-emerald-50/80 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100/70 hover:text-emerald-800">
+          <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7.25h6M7 10h6M7 12.75h4"/><path d="M6 3.75h5.25L15 7.5v8.75A1.75 1.75 0 0 1 13.25 18h-7.5A1.75 1.75 0 0 1 4 16.25v-10.75A1.75 1.75 0 0 1 5.75 3.75Z"/><path d="M11.25 3.75V7.5H15"/></svg>
+          <span>OpenAPI</span>
+        </a>
+      </div>
     </div>
   </footer>
 
