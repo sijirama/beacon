@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -182,12 +183,27 @@ func (h *PagesHandler) Stream(c *gin.Context) {
 	}
 	f := parseEventsFilters(c)
 
-	c.Writer.Header().Set("Content-Type", "text/event-stream")
-	c.Writer.Header().Set("Cache-Control", "no-cache")
-	c.Writer.Header().Set("Connection", "keep-alive")
-	c.Writer.Header().Set("X-Accel-Buffering", "no")
-	c.Writer.WriteHeader(http.StatusOK)
+	hdr := c.Writer.Header()
+	hdr.Set("Content-Type", "text/event-stream")
+	hdr.Set("Cache-Control", "no-cache, no-transform")
+	hdr.Set("Connection", "keep-alive")
+	hdr.Set("X-Accel-Buffering", "no")
+
+	// Reverse proxies (Cloudflare, nginx, Caddy) typically buffer the first
+	// ~1–2 KB of a response before forwarding. With SSE that means the
+	// browser sits on "connecting…" until enough body bytes have been
+	// written, even though the server has produced headers + a small
+	// comment. Pad the preamble out so the first chunk reliably gets
+	// pushed through. The padding is an SSE comment line (starts with ":")
+	// and is ignored by EventSource.
+	preamble := "retry: 3000\n\n: " + strings.Repeat(" ", 2048) + "\n\n: connected\n\n"
+	if _, err := fmt.Fprint(c.Writer, preamble); err != nil {
+		return
+	}
 	c.Writer.Flush()
+
+	log.Printf("stream: client connected (level=%q tokenID=%q metas=%d text=%q)",
+		f.Level, f.TokenID, len(f.metas), f.text)
 
 	ch, cancel := h.hub.Subscribe()
 	defer cancel()
