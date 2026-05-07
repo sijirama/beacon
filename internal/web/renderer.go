@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 type Renderer struct {
 	templates map[string]*template.Template
+	partials  *template.Template
 	funcs     template.FuncMap
 }
 
@@ -37,7 +39,15 @@ func NewRenderer(templatesDir string, funcs template.FuncMap) (*Renderer, error)
 		}
 		templates[name] = t
 	}
-	return &Renderer{templates: templates, funcs: funcs}, nil
+
+	partialsT := template.New("_partials").Funcs(funcs)
+	if len(partials) > 0 {
+		if _, err := partialsT.ParseFiles(partials...); err != nil {
+			return nil, fmt.Errorf("parse partials: %w", err)
+		}
+	}
+
+	return &Renderer{templates: templates, partials: partialsT, funcs: funcs}, nil
 }
 
 func (r *Renderer) Render(c *gin.Context, status int, name string, data gin.H) {
@@ -65,4 +75,18 @@ func (r *Renderer) Render(c *gin.Context, status int, name string, data gin.H) {
 	if err := t.ExecuteTemplate(c.Writer, "base", data); err != nil {
 		fmt.Fprintf(c.Writer, "<!-- render error: %v -->", err)
 	}
+}
+
+// RenderPartial executes one named partial template and returns its output.
+// Used by the SSE handler to render new event rows server-side so the
+// client just inserts the HTML.
+func (r *Renderer) RenderPartial(name string, data any) (string, error) {
+	if r.partials == nil {
+		return "", fmt.Errorf("partials not loaded")
+	}
+	var buf bytes.Buffer
+	if err := r.partials.ExecuteTemplate(&buf, name, data); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }

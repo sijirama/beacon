@@ -25,7 +25,14 @@
   </div>
 </div>
 
-<h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Recent deliveries</h2>
+<div class="flex items-center justify-between mb-3">
+  <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Recent deliveries</h2>
+  {{if gt .Total 0}}
+  <p class="text-sm text-gray-500">
+    Showing {{.ShowingFrom}}-{{.ShowingTo}} of {{.Total}} · Page {{.Page}} of {{.TotalPages}}
+  </p>
+  {{end}}
+</div>
 {{if .Tasks}}
 <div class="border border-gray-100 rounded-lg overflow-hidden">
   <table class="w-full text-sm">
@@ -58,6 +65,13 @@
 {{else}}
 <div class="border border-dashed border-gray-200 rounded-lg p-12 text-center">
   <p class="text-sm text-gray-500">No deliveries yet.</p>
+</div>
+{{end}}
+
+{{if or .HasPrev .HasNext}}
+<div class="mt-4 flex items-center justify-between">
+  <div>{{if .HasPrev}}<a href="{{.PrevURL}}" class="btn">Previous</a>{{end}}</div>
+  <div>{{if .HasNext}}<a href="{{.NextURL}}" class="btn">Next</a>{{end}}</div>
 </div>
 {{end}}
 {{end}}

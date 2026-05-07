@@ -21,6 +21,7 @@ import (
 	"github.com/sijirama/beacon/internal/models"
 	"github.com/sijirama/beacon/internal/queue"
 	"github.com/sijirama/beacon/internal/services/email"
+	"github.com/sijirama/beacon/internal/stream"
 	"github.com/sijirama/beacon/internal/web"
 )
 
@@ -94,11 +95,14 @@ func main() {
 		log.Fatalf("renderer: %v", err)
 	}
 
+	// --- Live-tail hub (in-process SSE pub/sub) ---
+	hub := stream.NewHub()
+
 	// --- Handlers ---
 	authH := handlers.NewAuth(cfg, store, sender, renderer)
-	pagesH := handlers.NewPages(gormDB, renderer, inspector)
+	pagesH := handlers.NewPages(gormDB, renderer, inspector, hub)
 	tokensH := handlers.NewTokens(gormDB)
-	emitH := handlers.NewEmit(gormDB, qClient, cfg.EmailRetries)
+	emitH := handlers.NewEmit(gormDB, qClient, hub, cfg.EmailRetries)
 	systemH := handlers.NewSystem(cfg.BaseURL, sqlDB, store, qClient)
 	emitLimiter := middleware.NewFixedWindowLimiter(60, time.Minute)
 	loginLimiter := middleware.NewFixedWindowLimiter(5, 15*time.Minute)
@@ -141,6 +145,7 @@ func main() {
 	// Protected web UI
 	protected := r.Group("/", middleware.RequireSession(sessionDeps))
 	protected.GET("/", pagesH.Events)
+	protected.GET("/events/stream", pagesH.Stream)
 	protected.GET("/events/:id", pagesH.EventDetail)
 	protected.GET("/queue", pagesH.Queue)
 	protected.GET("/tokens", pagesH.Tokens)

@@ -6,6 +6,10 @@
     <h1 class="text-2xl font-semibold tracking-tight">Events</h1>
     <p class="text-sm text-gray-500 mt-1">Recent events received via <span class="font-mono">/emit</span>.</p>
   </div>
+  <div class="flex items-center gap-2 text-xs text-gray-500" id="stream-status" data-state="connecting">
+    <span class="inline-block w-2 h-2 rounded-full bg-gray-300" id="stream-dot"></span>
+    <span id="stream-label">live</span>
+  </div>
 </div>
 
 <div class="mb-6 rounded-lg border border-gray-100 bg-white overflow-hidden">
@@ -13,20 +17,21 @@
     type="button"
     class="filter-toggle flex w-full items-center justify-between px-4 py-3 text-left"
     data-target="events-filters"
-    aria-expanded="{{if or .Query .Level}}true{{else}}false{{end}}">
+    aria-expanded="{{if or .Query .Level .TokenID}}true{{else}}false{{end}}">
     <span class="flex items-center gap-2">
       <span class="text-sm font-medium text-gray-900">Search & filter</span>
-      {{if or .Query .Level}}
+      {{if or .Query .Level .TokenID}}
       <span class="badge badge-muted normal-case tracking-normal">active</span>
       {{end}}
     </span>
-    <svg class="filter-chevron h-4 w-4 text-gray-400 transition-transform {{if or .Query .Level}}rotate-180{{end}}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5"/></svg>
+    <svg class="filter-chevron h-4 w-4 text-gray-400 transition-transform {{if or .Query .Level .TokenID}}rotate-180{{end}}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5"/></svg>
   </button>
-  <form method="GET" action="/" id="events-filters" class="{{if or .Query .Level}}block{{else}}hidden{{end}} border-t border-gray-100 px-4 py-4">
+  <form method="GET" action="/" id="events-filters" class="{{if or .Query .Level .TokenID}}block{{else}}hidden{{end}} border-t border-gray-100 px-4 py-4">
     <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_160px_auto]">
       <div>
         <label for="q" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-        <input id="q" name="q" value="{{.Query}}" class="input" placeholder="Title, message, source, event" />
+        <input id="q" name="q" value="{{.Query}}" class="input" placeholder="text, or metadata.host=db-01" />
+        <p class="text-xs text-gray-400 mt-1">Tip: use <span class="font-mono">metadata.key=value</span> tokens to filter by JSON metadata.</p>
       </div>
       <div>
         <label for="level" class="block text-sm font-medium text-gray-700 mb-1">Level</label>
@@ -57,6 +62,9 @@
   <p>Page {{.Page}} of {{.TotalPages}}</p>
 </div>
 
+<div id="events-list"
+     data-stream-url="{{.StreamURL}}"
+     data-page="{{.Page}}">
 {{if .Events}}
 <div class="border border-gray-100 rounded-lg overflow-hidden">
   <table class="w-full text-sm">
@@ -69,22 +77,8 @@
         <th class="text-left px-4 py-3 font-medium">When</th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-gray-100">
-      {{range .Events}}
-      <tr class="hover:bg-gray-50">
-        <td class="px-4 py-3 align-top">{{template "pill-level" .Level}}</td>
-        <td class="px-4 py-3 align-top">
-          <a href="/events/{{.ID}}" class="font-medium text-gray-900 hover:underline">{{.Title}}</a>
-        </td>
-        <td class="px-4 py-3 align-top">
-          {{if .Source}}{{template "pill-source" .Source}}{{else}}<span class="text-gray-300">—</span>{{end}}
-        </td>
-        <td class="px-4 py-3 align-top">
-          {{if .Event}}{{template "pill-event" .Event}}{{else}}<span class="text-gray-300">—</span>{{end}}
-        </td>
-        <td class="px-4 py-3 align-top text-gray-500 whitespace-nowrap" title="{{fmtDate .CreatedAt}}">{{timeAgo .CreatedAt}}</td>
-      </tr>
-      {{end}}
+    <tbody class="divide-y divide-gray-100" id="events-tbody">
+      {{range .Events}}{{template "event-row" .}}{{end}}
     </tbody>
   </table>
 </div>
@@ -101,11 +95,13 @@
   </div>
 </div>
 {{else}}
-<div class="border border-dashed border-gray-200 rounded-lg p-12 text-center">
+<div class="border border-dashed border-gray-200 rounded-lg p-12 text-center" id="events-empty">
   <p class="text-sm text-gray-500">No events yet.</p>
   <p class="text-xs text-gray-400 mt-2">Create a token and POST to <span class="font-mono">/emit</span> to see events here.</p>
 </div>
 {{end}}
+</div>
+
 <script>
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('.filter-toggle');
@@ -120,5 +116,69 @@
     const chevron = btn.querySelector('.filter-chevron');
     if (chevron) chevron.classList.toggle('rotate-180', !isOpen);
   });
+
+  // ---- Live tail (SSE) ----
+  // Only stream onto page 1 — adding new events to a historical page
+  // would be misleading. The server already filters by the same query
+  // params as the page, so any event we receive belongs in this list.
+  (function () {
+    const list = document.getElementById('events-list');
+    if (!list) return;
+    const page = parseInt(list.dataset.page || '1', 10);
+    if (page !== 1) return;
+    const url = list.dataset.streamUrl;
+    if (!url) return;
+
+    const status = document.getElementById('stream-status');
+    const dot = document.getElementById('stream-dot');
+    const label = document.getElementById('stream-label');
+    const setStatus = (state, text) => {
+      if (!status) return;
+      status.dataset.state = state;
+      if (label) label.textContent = text;
+      if (dot) {
+        dot.className = 'inline-block w-2 h-2 rounded-full ' + (
+          state === 'open'    ? 'bg-emerald-400 animate-pulse' :
+          state === 'error'   ? 'bg-red-400' :
+                                'bg-gray-300'
+        );
+      }
+    };
+    setStatus('connecting', 'connecting…');
+
+    const sse = new EventSource(url);
+    sse.onopen = () => setStatus('open', 'live');
+    sse.onerror = () => setStatus('error', 'reconnecting…');
+
+    sse.addEventListener('event', (msg) => {
+      let data;
+      try { data = JSON.parse(msg.data); } catch (e) { return; }
+      if (!data || !data.html) return;
+
+      // Empty-state? Reload to render the full table layout once.
+      const empty = document.getElementById('events-empty');
+      if (empty) { location.reload(); return; }
+
+      const tbody = document.getElementById('events-tbody');
+      if (!tbody) return;
+      // Skip if we somehow already have this row (e.g. between reload + first SSE tick).
+      if (tbody.querySelector('tr[data-event-id="' + data.id + '"]')) return;
+
+      const tmp = document.createElement('tbody');
+      tmp.innerHTML = data.html.trim();
+      const row = tmp.firstElementChild;
+      if (!row) return;
+      row.setAttribute('data-event-id', String(data.id));
+      row.classList.add('stream-new');
+      tbody.insertBefore(row, tbody.firstChild);
+      setTimeout(() => row.classList.remove('stream-new'), 1700);
+
+      // Cap visible rows so a busy stream doesn't grow the DOM forever.
+      const cap = 50;
+      while (tbody.children.length > cap) {
+        tbody.removeChild(tbody.lastChild);
+      }
+    });
+  })();
 </script>
 {{end}}

@@ -19,6 +19,13 @@
   </form>
 </div>
 
+{{if gt .Total 0}}
+<div class="flex items-center justify-between mb-4 text-sm text-gray-500">
+  <p>Showing {{.ShowingFrom}}-{{.ShowingTo}} of {{.Total}}</p>
+  <p>Page {{.Page}} of {{.TotalPages}}</p>
+</div>
+{{end}}
+
 {{if .Tokens}}
 <div class="border border-gray-100 rounded-lg overflow-hidden">
   <table class="w-full text-sm">
@@ -65,6 +72,13 @@
 <div class="border border-dashed border-gray-200 rounded-lg p-12 text-center">
   <p class="text-sm text-gray-500">No tokens yet.</p>
   <p class="text-xs text-gray-400 mt-2">Create one above to start sending events.</p>
+</div>
+{{end}}
+
+{{if or .HasPrev .HasNext}}
+<div class="mt-4 flex items-center justify-between">
+  <div>{{if .HasPrev}}<a href="{{.PrevURL}}" class="btn">Previous</a>{{end}}</div>
+  <div>{{if .HasNext}}<a href="{{.NextURL}}" class="btn">Next</a>{{end}}</div>
 </div>
 {{end}}
 {{end}}

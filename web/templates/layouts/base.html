@@ -22,6 +22,11 @@
       .badge-muted { @apply bg-gray-100 text-gray-700; }
       .badge-success { @apply bg-emerald-50 text-emerald-700; }
     }
+    @keyframes stream-flash {
+      0%   { background-color: rgb(254 249 195); }
+      100% { background-color: transparent; }
+    }
+    .stream-new { animation: stream-flash 1.6s ease-out; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">

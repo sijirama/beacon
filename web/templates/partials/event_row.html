@@ -1,0 +1,13 @@
+{{define "event-row"}}<tr class="hover:bg-gray-50">
+  <td class="px-4 py-3 align-top">{{template "pill-level" .Level}}</td>
+  <td class="px-4 py-3 align-top">
+    <a href="/events/{{.ID}}" class="font-medium text-gray-900 hover:underline">{{.Title}}</a>
+  </td>
+  <td class="px-4 py-3 align-top">
+    {{if .Source}}{{template "pill-source" .Source}}{{else}}<span class="text-gray-300">—</span>{{end}}
+  </td>
+  <td class="px-4 py-3 align-top">
+    {{if .Event}}{{template "pill-event" .Event}}{{else}}<span class="text-gray-300">—</span>{{end}}
+  </td>
+  <td class="px-4 py-3 align-top text-gray-500 whitespace-nowrap" title="{{fmtDate .CreatedAt}}">{{timeAgo .CreatedAt}}</td>
+</tr>{{end}}
